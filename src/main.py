@@ -15,6 +15,7 @@ for perc in [0, 50]:
 						SingleElim(team_gen(size), perception_error=perc, seeding=seeding, to_win=to_win),
 				]: formats.append(form)
 
+	formats.append(TheInternational2017(team_gen(18), 'The International 2017', perception_error=perc))
 	formats.append(Perfect(team_gen(8), 'Perfect 8-team Format', perception_error=perc))
 	formats.append(Worst(team_gen(8), 'Worst 8-team Format', perception_error=perc))
 	formats.append(GSLInto4TeamSingleElim(team_gen(8), 'Starladder iLeague Season 3 / 4 / 5', perception_error=perc))
@@ -30,11 +31,12 @@ for perc in [0, 50]:
 	formats.append(PGLBucharest(team_gen(16), 'PGL Bucharest Major', perception_error=perc))
 	formats.append(GSLIntoBubble(team_gen(8), 'GESC Indonesia', perception_error=perc))
 	formats.append(DotaAsiaChampionships(team_gen(16), 'Dota Asia Championships 2018', perception_error=perc))
+	formats.append(MDLChangsha(team_gen(12), 'MDL Changsha', perception_error=perc))
 	# epicenter
 	# gesc thailand
-	# MDL Changsha
 	# ESL One birmingham
 	# China supermajor
+
 
 print("Starting parallel evaluation")
 with futures.ThreadPoolExecutor(max_workers=16) as pool:

@@ -36,7 +36,7 @@ class RetObj:
                 else: 
                     nmat[x][y] = 0
 
-        #print(np.matrix(nmat))
+        print(np.matrix(nmat))
         #print("\n\n")
         cell_error_rate = 100 * (sum(map(sum, nmat)) / (0.5 * n * (n+1)))
         return  cell_error_rate 
@@ -820,3 +820,219 @@ class PGLBucharest(TFormat):
             ret.clear_temp()
 
         return (self, ret)
+
+
+class MDLChangsha(TFormat):
+    def __init__(self, teams, name, perception_error=0):        
+        super().__init__(name, teams, perception_error)
+
+    def broken(self, tbs):
+        seen_score = {}
+        ret = True
+        for t in tbs:
+            if t.wins in seen_score:
+                ret = False
+                break
+            else:
+                seen_score[t.wins] = True
+        return ret
+
+
+    def resolve_group(self, _ts):
+        first_run = rr_fixed_games(_ts, num_matches_per_series=2)
+        ordered = sorted(first_run.values(), key=lambda x: x.score(), reverse=False)
+        
+        tied = []
+        cur = None
+        for res in ordered:
+            if cur == None:
+                cur = res.three_score()
+            elif res == cur:
+                tied.append(res)
+            else:                
+                if len(tied) > 1:
+                    pass
+                else:
+                    flag = True
+                    while flag:
+                        tiebreakers = rr_fixed_games(tied, num_series=1)
+                        if self.broken(tiebreakers.values()):
+                            flag = False # tie broken, last set of tiebreakers are good
+                    for _t, r in tiebreakers.items():
+                        first_run[_t].tiebreakers = r.wins
+                tied = []
+            cur = res.score()
+
+        return sorted(first_run.values(), key=lambda x: x.score(), reverse=True)
+
+    def run(self):
+        ret = RetObj(self.n, N)
+
+        for i in range(N):
+            ts = copy.deepcopy(self.teams)
+            for t in ts: 
+                t.perceived_skill = t.true_skill + (self.perception_error * normal())
+            ts = sorted(ts, key=lambda x: x.perceived_skill, reverse=True)
+            
+            a = [1, 3, 5, 7, 9, 11]
+            gr_a = [_.team for _ in self.resolve_group([_ for _ in ts if _.rank in a])]
+            gr_b = [_.team for _ in self.resolve_group([_ for _ in ts if _.rank not in a])]
+
+            ret.add_res(gr_a[5].rank, '11-12')
+            ret.add_res(gr_b[5].rank, '11-12')
+
+            # winners bracket
+            wb_r1_1 = boX(gr_b[1], gr_a[2])
+            wb_r1_2 = boX(gr_b[2], gr_a[1])
+
+            wb_sf_1 = boX(wb_r1_1[0], gr_a[0])
+            wb_sf_2 = boX(wb_r1_2[0], gr_b[0])
+
+            wb_final = boX(wb_sf_1[0], wb_sf_2[0])
+
+            # losers bracket
+            lb_r1_1 = boX(gr_a[3], gr_b[4], 1)
+            lb_r1_2 = boX(gr_b[3], gr_a[4], 1)
+            ret.add_res(lb_r1_1[1].rank, '9-10')
+            ret.add_res(lb_r1_2[1].rank, '9-10')
+
+            lb_r2_1 = boX(lb_r1_1[0], wb_r1_1[1])
+            lb_r2_2 = boX(lb_r1_2[0], wb_r1_2[1])
+            ret.add_res(lb_r2_1[1].rank, '7-8')
+            ret.add_res(lb_r2_2[1].rank, '7-8')
+
+            lb_r3_1 = boX(lb_r2_1[0], wb_sf_2[1])
+            lb_r3_2 = boX(lb_r2_2[0], wb_sf_1[1])
+            ret.add_res(lb_r3_1[1].rank, '5-6')
+            ret.add_res(lb_r3_2[1].rank, '5-6')
+
+            lb_sf = boX(lb_r3_1[0], lb_r3_2[0])
+            ret.add_res(lb_sf[1].rank, '4')
+
+            lb_finals = boX(lb_sf[0], wb_final[1])
+            ret.add_res(lb_finals[1].rank, '3')
+
+            finals = boX(lb_finals[0], wb_final[0])
+
+            ret.add_res(finals[1].rank, '2')
+            ret.add_res(finals[0].rank, '1')
+                       
+            ret.accumulate()                              
+            ret.clear_temp()
+
+        return (self, ret)
+
+class TheInternational2017(TFormat):
+    def __init__(self, teams, name, perception_error=0):        
+        super().__init__(name, teams, perception_error)
+
+    def broken(self, tbs):
+        seen_score = {}
+        ret = True
+        for t in tbs:
+            if t.wins in seen_score:
+                ret = False
+                break
+            else:
+                seen_score[t.wins] = True
+        return ret
+
+
+    def resolve_group(self, _ts):
+        first_run = rr_fixed_games(_ts, num_matches_per_series=2)
+        ordered = sorted(first_run.values(), key=lambda x: x.score(), reverse=False)
+        
+        tied = []
+        cur = None
+        for res in ordered:
+            if cur == None:
+                cur = res.three_score()
+            elif res == cur:
+                tied.append(res)
+            else:                
+                if len(tied) > 1:
+                    pass
+                else:
+                    flag = True
+                    while flag:
+                        tiebreakers = rr_fixed_games(tied, num_series=1)
+                        if self.broken(tiebreakers.values()):
+                            flag = False # tie broken, last set of tiebreakers are good
+                    for _t, r in tiebreakers.items():
+                        first_run[_t].tiebreakers = r.wins
+                tied = []
+            cur = res.score()
+
+        return sorted(first_run.values(), key=lambda x: x.score(), reverse=True)
+
+    def run(self):
+        ret = RetObj(self.n, N)
+
+        for i in range(N):
+            ts = copy.deepcopy(self.teams)
+            for t in ts: 
+                t.perceived_skill = t.true_skill + (self.perception_error * normal())
+            ts = sorted(ts, key=lambda x: x.perceived_skill, reverse=True)
+            
+            a = [1, 3, 5, 7, 9, 11, 13, 15, 17]
+            gr_a = [_.team for _ in self.resolve_group([_ for _ in ts if _.rank in a])]
+            gr_b = [_.team for _ in self.resolve_group([_ for _ in ts if _.rank not in a])]
+
+            ret.add_res(gr_a[8].rank, '17-18')
+            ret.add_res(gr_b[8].rank, '17-18')
+
+            # winnners bracket
+            wb_r1_1 = boX(gr_a[0], gr_b[3])
+            wb_r1_2 = boX(gr_a[2], gr_b[1])            
+            wb_r1_3 = boX(gr_b[2], gr_a[1])
+            wb_r1_4 = boX(gr_b[0], gr_a[3])
+
+            wb_r2_1 = boX(wb_r1_1[0], wb_r1_2[0])
+            wb_r2_2 = boX(wb_r1_3[0], wb_r1_4[0])
+
+            wb_finals = boX(wb_r2_1[0], wb_r2_2[0])
+
+            # losers bracket
+            lb_r1_1 = boX(gr_a[4], gr_b[7], 1)
+            lb_r1_2 = boX(gr_a[6], gr_b[5], 1)            
+            lb_r1_3 = boX(gr_b[6], gr_a[5], 1)
+            lb_r1_4 = boX(gr_b[4], gr_a[7], 1)
+            ret.add_res(lb_r1_1[1].rank, '13-16')
+            ret.add_res(lb_r1_2[1].rank, '13-16')
+            ret.add_res(lb_r1_3[1].rank, '13-16')
+            ret.add_res(lb_r1_4[1].rank, '13-16')
+
+            lb_r2_1 = boX(lb_r1_1[0], wb_r1_1[1])
+            lb_r2_2 = boX(lb_r1_2[0], wb_r1_2[1])
+            lb_r2_3 = boX(lb_r1_3[0], wb_r1_3[1])
+            lb_r2_4 = boX(lb_r1_4[0], wb_r1_4[1])
+            ret.add_res(lb_r2_1[1].rank, '9-12')
+            ret.add_res(lb_r2_2[1].rank, '9-12')
+            ret.add_res(lb_r2_3[1].rank, '9-12')
+            ret.add_res(lb_r2_4[1].rank, '9-12')
+
+            lb_r3_1 = boX(lb_r2_1[0], lb_r2_2[0])
+            lb_r3_2 = boX(lb_r2_3[0], lb_r2_4[0])
+            ret.add_res(lb_r3_1[1].rank, '7-8')
+            ret.add_res(lb_r3_2[1].rank, '7-8')
+
+            lb_r4_1 = boX(lb_r3_1[0], wb_r2_2[1])
+            lb_r4_2 = boX(lb_r3_2[0], wb_r2_1[1])            
+            ret.add_res(lb_r4_1[1].rank, '5-6')
+            ret.add_res(lb_r4_2[1].rank, '5-6')
+
+            lb_sf = boX(lb_r4_1[0], lb_r4_2[0])
+            ret.add_res(lb_sf[1].rank, '4')
+
+            lb_finals = boX(lb_sf[0], wb_finals[1])
+            ret.add_res(lb_finals[1].rank, '3')
+
+            finals = boX(lb_finals[0], wb_finals[0], 3)
+            ret.add_res(finals[1].rank, '2')
+            ret.add_res(finals[0].rank, '1')
+
+            ret.accumulate()                              
+            ret.clear_temp()
+
+        return (self, ret)
+
