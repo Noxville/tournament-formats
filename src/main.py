@@ -34,7 +34,7 @@ for perc in [0, 50]:
 	formats.append(MDLChangsha(team_gen(12), 'MDL Changsha', perception_error=perc))
 	# epicenter
 	# gesc thailand
-	# ESL One birmingham
+	formats.append(ESLTwelveTeamFormat(team_gen(12), 'ESL Birmingham', perception_error=perc, gsl_games=[1,2,2,2]))
 	# China supermajor
 
 

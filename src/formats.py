@@ -1036,3 +1036,139 @@ class TheInternational2017(TFormat):
 
         return (self, ret)
 
+class GSLInto4TeamSingleElim(TFormat):
+    def __init__(self, teams, name, perception_error=0, gsl_games=[2,2,2,2], finals=3):
+        """ 
+            *gsl_games* is the number of games to win the various stages of a GSL bracket (default is that they're all bo3s):
+            -[0] opening rounds
+            -[1] winners match
+            -[2] losers match
+            -[3] decider
+
+            *finals* is the grand finals # games to win 
+        """
+        self.gsl_games = gsl_games
+        self.finals = finals
+        super().__init__(name, teams, perception_error)
+
+
+    def run(self):
+        ret = RetObj(self.n, N)
+
+        for i in range(N):
+            ts = copy.deepcopy(self.teams)
+            for t in ts: 
+                t.perceived_skill = t.true_skill + (self.perception_error * normal())
+            ts = sorted(ts, key=lambda x: x.perceived_skill, reverse=True)
+            
+            gr_a = gsl([ts[0], ts[2], ts[4], ts[6]], gsl_games=self.gsl_games)
+            gr_b = gsl([ts[1], ts[3], ts[5], ts[7]], gsl_games=self.gsl_games)
+
+            ret.add_res(gr_a[2].rank, '5-6')
+            ret.add_res(gr_b[2].rank, '5-6')
+            ret.add_res(gr_a[3].rank, '7-8')
+            ret.add_res(gr_b[3].rank, '7-8')
+
+            semifinal_1 = boX(gr_a[0], gr_b[1], 2)
+            semifinal_2 = boX(gr_b[0], gr_a[1], 2)
+
+            ret.add_res(semifinal_1[1].rank, '3-4')
+            ret.add_res(semifinal_2[1].rank, '3-4')
+
+            finals = boX(semifinal_1[0], semifinal_2[0], self.finals)
+
+            ret.add_res(finals[1].rank, '2')
+            ret.add_res(finals[0].rank, '1')
+                       
+            ret.accumulate()                              
+            ret.clear_temp()
+
+        return (self, ret)
+
+class ESLTwelveTeamFormat(TFormat):
+    def __init__(self, teams, name, perception_error=0, gsl_games=[1,2,2,2]):
+        self.gsl_games = gsl_games
+        super().__init__(name, teams, perception_error)
+
+    def broken(self, tbs):
+        seen_score = {}
+        ret = True
+        for t in tbs:
+            if t.wins in seen_score:
+                ret = False
+                break
+            else:
+                seen_score[t.wins] = True
+        return ret
+
+
+    def resolve_placings(self, _ts):
+        first_run = rr_fixed_games(_ts)
+        ordered = sorted(first_run.values(), key=lambda x: x.score(), reverse=False)
+        
+        tied = []
+        cur = None
+        for res in ordered:
+            if cur == None:
+                cur = res.three_score()
+            elif res == cur:
+                tied.append(res)
+            else:                
+                if len(tied) > 1:
+                    pass
+                else:
+                    flag = True
+                    while flag:
+                        tiebreakers = rr_fixed_games(tied)
+                        if self.broken(tiebreakers.values()):
+                            flag = False # tie broken, last set of tiebreakers are good
+                    for _t, r in tiebreakers.items():
+                        first_run[_t].tiebreakers = r.wins
+                tied = []
+            cur = res.score()
+
+        return sorted(first_run.values(), key=lambda x: x.score(), reverse=True)
+
+
+    def run(self):
+        ret = RetObj(self.n, N)
+
+        for i in range(N):
+            ts = copy.deepcopy(self.teams)
+            for t in ts: 
+                t.perceived_skill = t.true_skill + (self.perception_error * normal())
+            ts = sorted(ts, key=lambda x: x.perceived_skill, reverse=True)
+            
+            gr_a = gsl([ts[0], ts[5], ts[6], ts[11]], gsl_games=self.gsl_games)
+            gr_b = gsl([ts[1], ts[4], ts[7], ts[10]], gsl_games=self.gsl_games)
+            gr_c = gsl([ts[2], ts[3], ts[8], ts[9]], gsl_games=self.gsl_games)
+
+            for _ in [gr_a, gr_b, gr_c]:
+                ret.add_res(_[2].rank, '7-9')
+                ret.add_res(_[3].rank, '10-12')
+
+            winners = [_.team for _ in self.resolve_placings([gr_a[0], gr_b[0], gr_c[0]])]
+            rups = sorted([gr_a[1], gr_b[1], gr_c[1]], key=lambda x: random()) # [_.team for _ in self.resolve_placings([gr_a[1], gr_b[1], gr_c[1]])]
+
+            qf_1 = boX(rups[0], rups[1])
+            qf_2 = boX(winners[2], rups[2])
+
+            ret.add_res(qf_1[1].rank, '5-6')
+            ret.add_res(qf_2[1].rank, '5-6')
+
+            semifinal_1 = boX(qf_1[0], winners[0])
+            semifinal_2 = boX(qf_2[0], winners[1])            
+
+            decider = boX(semifinal_1[1], semifinal_2[1])
+            ret.add_res(decider[1].rank, '4')
+            ret.add_res(decider[0].rank, '3')
+
+            finals = boX(semifinal_1[0], semifinal_2[0], 3)
+
+            ret.add_res(finals[1].rank, '2')
+            ret.add_res(finals[0].rank, '1')
+                       
+            ret.accumulate()                              
+            ret.clear_temp()
+
+        return (self, ret)
