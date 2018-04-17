@@ -1,5 +1,5 @@
 from operator import methodcaller
-from concurrent import futures
+from multiprocessing import Pool
 import threading
 
 from formats import *
@@ -32,14 +32,14 @@ for perc in [0, 50]:
 	formats.append(GSLIntoBubble(team_gen(8), 'GESC Indonesia', perception_error=perc))
 	formats.append(DotaAsiaChampionships(team_gen(16), 'Dota Asia Championships 2018', perception_error=perc))
 	formats.append(MDLChangsha(team_gen(12), 'MDL Changsha', perception_error=perc))
-	# epicenter
+	formats.append(Epicenter(team_gen(12), 'Epicenter', perception_error=perc))
 	# gesc thailand
 	formats.append(ESLTwelveTeamFormat(team_gen(12), 'ESL Birmingham', perception_error=perc, gsl_games=[1,2,2,2]))
 	# China supermajor
 
 
 print("Starting parallel evaluation")
-with futures.ThreadPoolExecutor(max_workers=16) as pool:
+with Pool() as pool:
 	output = pool.map(methodcaller('run'), formats)
 
 	for e in sorted([(_[0].name, _[0].n, _[0].perception_error, _[1].matrix_score(), _[1].top4()) for _ in output], key=lambda x: x[3]):
