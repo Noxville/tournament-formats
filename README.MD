@@ -8,3 +8,4 @@ The goal of this is to quantify the 'quality' of a tournament. What do we mean b
 * Tournaments where teams end up tied in a position should be penalizing for failing to ordinaly rank those tied teams
 
 
+Warning - by default this program executes 1 process per-core; it's very likely your machine will be quite slow for the few minutes it takes to execute.

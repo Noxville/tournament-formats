@@ -67,6 +67,9 @@ class RRRes:
 	def three_score(self):
 		return (10000 * (3 * self.series_wins + self.series_draws)) + (100 * self.wins) + self.tiebreakers
 
+	def series_score(self):
+		return (1000 * self.series_wins) + (10 * self.wins) + self.tiebreakers
+
 	def __repr__(self):
 		return "Team #{}: \t{}-{} raw\t+{} ={} -{} in series (tb: {}) ~~ raw score: {}\t\t, 3-pt score: {}".format(self.team.rank, self.wins, self.losses, self.series_wins, self.series_draws, self.series_losses, self.tiebreakers, self.score(), self.three_score())
 
@@ -106,9 +109,28 @@ def rr_box_matches(ts, box_wins_per_match=2):
 	""" 
 		Round robin stuff where each matchup is a boX
 	"""
+	rmap = {}
+	for t in ts:
+		rmap[t] = RRRes(t)
+
 	for a in ts:
 		for b in ts:
 			if (a.rank > b.rank):
-				m = boX(a, b, box_wins_per_match)
+				a_s, b_s = 0, 0
+				while a_s != box_wins_per_match and b_s != box_wins_per_match:
+					m = boX(a, b, 1)
+					rmap[m[0]].wins += 1
+					rmap[m[1]].losses += 1
+					if b == m[0]:
+						b_s += 1
+					else:
+						a_s += 1
 
-	# @todo: fix
+				if a_s > b_s:
+					rmap[a].series_wins += 1
+					rmap[b].series_losses += 1
+				else:					
+					rmap[b].series_wins += 1
+					rmap[a].series_losses += 1
+	return rmap
+	
