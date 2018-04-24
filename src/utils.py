@@ -1,6 +1,8 @@
 from math import log
 from random import random
 from models import Team
+from math import log, pi, pow, sqrt
+import copy
 
 def team_gen(n, start=1200, step=25):
 	return [Team(_, 1 + i) for i, _ in enumerate(range(1200, 1200 - (step * n), -1 * step))]
@@ -11,6 +13,20 @@ def boX(ta, tb, towin=2):
     d = (0.0 + ta.true_skill - tb.true_skill) / 400.0
     odds = 1. / (1. + pow(10.0, d))
 
+    while a != towin and b != towin:
+        if random() > odds:
+            a += 1
+        else:
+            b += 1
+    return [ta, tb] if a > b else [tb, ta]
+
+Q = log(10.0) / 400.0
+PHI = 65
+def boXg(ta, tb, towin=2):
+    g_rd = 1.0 / sqrt(1.0 + ((3.0 * Q * Q * PHI * PHI)) / (pi * pi))
+    odds = 1.0 / (1.0 + pow(10.0, (-1.0 * g_rd * (tb.rating - ta.rating) * (1.0 / 400.0))))
+
+    a, b = 0, 0
     while a != towin and b != towin:
         if random() > odds:
             a += 1
@@ -73,7 +89,7 @@ class RRRes:
 	def __repr__(self):
 		return "Team #{}: \t{}-{} raw\t+{} ={} -{} in series (tb: {}) ~~ raw score: {}\t\t, 3-pt score: {}".format(self.team.rank, self.wins, self.losses, self.series_wins, self.series_draws, self.series_losses, self.tiebreakers, self.score(), self.three_score())
 
-def rr_fixed_games(ts, num_series=1, num_matches_per_series=1):
+def rr_fixed_games(ts, num_series=1, num_matches_per_series=1, func='elo'):
 	""" 
 		Round robin stuff where each matchup has a fixed number of games
 	"""
@@ -89,7 +105,10 @@ def rr_fixed_games(ts, num_series=1, num_matches_per_series=1):
 						_gw[a] = 0
 						_gw[b] = 0
 						for n in range(num_matches_per_series):
-							m = boX(a, b, 1)
+							if func == 'elo':
+								m = boX(a, b, 1)
+							elif func == 'glicko':
+								m = boXg(a, b, 1)
 							rmap[m[0]].wins += 1
 							rmap[m[1]].losses += 1
 							_gw[m[0]] = 1 + _gw[m[0]]
@@ -105,7 +124,7 @@ def rr_fixed_games(ts, num_series=1, num_matches_per_series=1):
 							rmap[a].series_losses += 1
 	return rmap
 
-def rr_box_matches(ts, box_wins_per_match=2):
+def rr_box_matches(ts, box_wins_per_match=2, func='elo'):
 	""" 
 		Round robin stuff where each matchup is a boX
 	"""
@@ -118,7 +137,10 @@ def rr_box_matches(ts, box_wins_per_match=2):
 			if (a.rank > b.rank):
 				a_s, b_s = 0, 0
 				while a_s != box_wins_per_match and b_s != box_wins_per_match:
-					m = boX(a, b, 1)
+					if func == 'elo':
+						m = boX(a, b, 1)
+					elif func == 'glicko':
+						m = boXg(a, b, 1)
 					rmap[m[0]].wins += 1
 					rmap[m[1]].losses += 1
 					if b == m[0]:
@@ -133,4 +155,11 @@ def rr_box_matches(ts, box_wins_per_match=2):
 					rmap[b].series_wins += 1
 					rmap[a].series_losses += 1
 	return rmap
+
+def pluck_t(ts, names):
+	teams = [copy.deepcopy(ts[_]) for _ in names]
+	std_ts = sorted(teams, key=lambda x: x.rating, reverse=True)
+	for i, t in enumerate(std_ts):
+		std_ts[i].rank = i + 1
+	return std_ts
 	
