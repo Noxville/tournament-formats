@@ -7,32 +7,26 @@ import copy
 def team_gen(n, start=1200, step=25):
 	return [Team(_, 1 + i) for i, _ in enumerate(range(1200, 1200 - (step * n), -1 * step))]
 
-
-def boX(ta, tb, towin=2):
-    a, b = 0, 0
-    d = (0.0 + ta.true_skill - tb.true_skill) / 400.0
-    odds = 1. / (1. + pow(10.0, d))
-
-    while a != towin and b != towin:
-        if random() > odds:
-            a += 1
-        else:
-            b += 1
-    return [ta, tb] if a > b else [tb, ta]
-
 Q = log(10.0) / 400.0
-PHI = 65
-def boXg(ta, tb, towin=2):
-    g_rd = 1.0 / sqrt(1.0 + ((3.0 * Q * Q * PHI * PHI)) / (pi * pi))
-    odds = 1.0 / (1.0 + pow(10.0, (-1.0 * g_rd * (tb.rating - ta.rating) * (1.0 / 400.0))))
-
+PHI = 65	
+def boX(ta, tb, towin=2, func='elo'):
     a, b = 0, 0
+    odds = None
+
+    if func == 'elo':
+    	d = (0.0 + ta.true_skill - tb.true_skill) / 400.0
+    	odds = 1. / (1. + pow(10.0, d))
+    elif func == 'glicko':
+    	g_rd = 1.0 / sqrt(1.0 + ((3.0 * Q * Q * PHI * PHI)) / (pi * pi))
+    	odds = 1.0 / (1.0 + pow(10.0, (-1.0 * g_rd * (tb.rating - ta.rating) * (1.0 / 400.0))))
+
     while a != towin and b != towin:
         if random() > odds:
             a += 1
         else:
             b += 1
     return [ta, tb] if a > b else [tb, ta]
+
 
 def sePairings(n):
 	rds = round(log(n , 2)) - 1
@@ -56,14 +50,14 @@ def chunk(l, n):
     for i in range(0, len(l), n):
         yield l[i : i + n]
 
-def gsl(ts, gsl_games):	
+def gsl(ts, gsl_games, func='elo'):	
 	(opening_games, winners_games, losers_games, decider_games) = gsl_games
 	
-	g1 = boX(ts[0], ts[3], opening_games)
-	g2 = boX(ts[1], ts[2], opening_games)
-	winners = boX(g1[0], g2[0], winners_games)
-	losers = boX(g1[1], g2[1], losers_games)
-	decider = boX(winners[1], losers[0], decider_games)
+	g1 = boX(ts[0], ts[3], opening_games, func=func)
+	g2 = boX(ts[1], ts[2], opening_games, func=func)
+	winners = boX(g1[0], g2[0], winners_games, func=func)
+	losers = boX(g1[1], g2[1], losers_games, func=func)
+	decider = boX(winners[1], losers[0], decider_games, func=func)
 
 	return [winners[0], decider[0], decider[1], losers[1]]
 
@@ -105,10 +99,7 @@ def rr_fixed_games(ts, num_series=1, num_matches_per_series=1, func='elo'):
 						_gw[a] = 0
 						_gw[b] = 0
 						for n in range(num_matches_per_series):
-							if func == 'elo':
-								m = boX(a, b, 1)
-							elif func == 'glicko':
-								m = boXg(a, b, 1)
+							m = boX(a, b, 1, func=func)
 							rmap[m[0]].wins += 1
 							rmap[m[1]].losses += 1
 							_gw[m[0]] = 1 + _gw[m[0]]
@@ -137,10 +128,7 @@ def rr_box_matches(ts, box_wins_per_match=2, func='elo'):
 			if (a.rank > b.rank):
 				a_s, b_s = 0, 0
 				while a_s != box_wins_per_match and b_s != box_wins_per_match:
-					if func == 'elo':
-						m = boX(a, b, 1)
-					elif func == 'glicko':
-						m = boXg(a, b, 1)
+					m = boX(a, b, 1, func=func)
 					rmap[m[0]].wins += 1
 					rmap[m[1]].losses += 1
 					if b == m[0]:
