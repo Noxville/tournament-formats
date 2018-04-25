@@ -362,7 +362,7 @@ for t in [
     CurTeam('Kinguin', 90, 1647.74),
     CurTeam('Vega', 90, 1716.47),
     CurTeam('Echo', 30, 1500, True),
-    CurTeam('IGV', 0, 1664.18),
+    CurTeam('IGV', 0, 1664.18, True),
     CurTeam('IG', 0, 1749.94, True),
     CurTeam('VGJ. Storm', 0, 1831.67, True),
     CurTeam('Infamous', 0, 1537.20, True),
