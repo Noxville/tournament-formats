@@ -355,6 +355,85 @@ class GSLIntoBubble(TFormat):
 
         return (self, ret)
 
+class RoundRobinIntoBubble(TFormat):
+    def __init__(self, teams, name, perception_error=0):
+        super().__init__(name, teams, perception_error)
+
+    def broken(self, tbs):
+        seen_score = {}
+        ret = True
+        for t in tbs:
+            if t.wins in seen_score:
+                ret = False
+                break
+            else:
+                seen_score[t.wins] = True
+        return ret
+
+
+    def resolve_group(self, _ts):
+        first_run = rr_fixed_games(_ts, num_series=1, num_matches_per_series=1)
+        ordered = sorted(first_run.values(), key=lambda x: x.three_score(), reverse=False)
+        
+        tied = []
+        cur = None
+        for res in ordered:
+            if cur == None:
+                cur = res.score()
+            elif res == cur:
+                tied.append(res)
+            else:                
+                if len(tied) > 1:
+                    pass
+                else:
+                    flag = True
+                    while flag:
+                        tiebreakers = rr_fixed_games(tied, num_series=1)
+                        if self.broken(tiebreakers.values()):
+                            flag = False # tie broken, last set of tiebreakers are good
+                    for _t, r in tiebreakers.items():
+                        first_run[_t].tiebreakers = r.wins
+                tied = []
+            cur = res.three_score()
+
+        return sorted(first_run.values(), key=lambda x: x.three_score(), reverse=True)
+
+    def run(self):
+        ret = RetObj(self.n, N)
+
+        for i in range(N):
+            ts = copy.deepcopy(self.teams)
+            for t in ts: 
+                t.perceived_skill = t.true_skill + (self.perception_error * normal())
+            ts = sorted(ts, key=lambda x: x.perceived_skill, reverse=True)
+            
+            groups = [_.team for _ in self.resolve_group(ts)]
+            ret.add_res(groups[8].rank, '9')
+            ret.add_res(groups[7].rank, '8')
+            ret.add_res(groups[6].rank, '7')
+
+            r1_1 = boX(groups[5], groups[2])
+            r1_2 = boX(groups[4], groups[3])
+            
+            for _ in [r1_1, r1_2]:
+                ret.add_res(_[1].rank, '5-6')
+
+            r2_1 = boX(r1_1[0], groups[1])
+            r2_2 = boX(r1_2[0], groups[0])
+            
+            for _ in [r2_1, r2_2]:
+                ret.add_res(_[1].rank, '3-4')
+
+            finals = boX(r2_1[0], r2_2[0])
+
+            ret.add_res(finals[1].rank, '2')
+            ret.add_res(finals[0].rank, '1')
+                       
+            ret.accumulate()                              
+            ret.clear_temp()
+
+        return (self, ret)
+
 class SummitIdioticFormat(TFormat):
     def __init__(self, teams, name, perception_error):
         super().__init__(name, teams, perception_error)
@@ -1076,6 +1155,82 @@ class GSLInto4TeamSingleElim(TFormat):
             ret.add_res(semifinal_2[1].rank, '3-4')
 
             finals = boX(semifinal_1[0], semifinal_2[0], self.finals)
+
+            ret.add_res(finals[1].rank, '2')
+            ret.add_res(finals[0].rank, '1')
+                       
+            ret.accumulate()                              
+            ret.clear_temp()
+
+        return (self, ret)
+
+class SuperMajor(TFormat):
+    def __init__(self, teams, name, perception_error=0, gsl_games=[2,2,2,2]):
+        self.gsl_games = gsl_games
+        super().__init__(name, teams, perception_error)
+
+
+    def run(self):
+        ret = RetObj(self.n, N)
+
+        for i in range(N):
+            ts = copy.deepcopy(self.teams)
+            for t in ts: 
+                t.perceived_skill = t.true_skill + (self.perception_error * normal())
+            ts = sorted(ts, key=lambda x: x.perceived_skill, reverse=True)
+            
+            gr_a = gsl([ts[0], ts[5], ts[8], ts[13]], gsl_games=self.gsl_games)
+            gr_b = gsl([ts[1], ts[4], ts[9], ts[12]], gsl_games=self.gsl_games)
+            gr_c = gsl([ts[2], ts[7], ts[10], ts[15]], gsl_games=self.gsl_games)
+            gr_d = gsl([ts[3], ts[6], ts[11], ts[14]], gsl_games=self.gsl_games)
+
+            wb_r1_1 = boX(gr_a[0], gr_c[1])
+            wb_r1_2 = boX(gr_d[0], gr_b[1])
+            wb_r1_3 = boX(gr_b[0], gr_d[1])
+            wb_r1_4 = boX(gr_c[0], gr_a[1])
+
+            wb_r2_1 = boX(wb_r1_1[0], wb_r1_2[0])
+            wb_r2_2 = boX(wb_r1_3[0], wb_r1_4[0])
+
+            wb_finals = boX(wb_r2_1[0], wb_r2_2[0])
+
+            # lb
+
+            lb_r1_1 = boX(gr_a[2], gr_c[3])
+            lb_r1_2 = boX(gr_d[2], gr_b[3])
+            lb_r1_3 = boX(gr_b[2], gr_d[3])
+            lb_r1_4 = boX(gr_c[2], gr_a[3])
+
+            for _ in [lb_r1_1, lb_r1_2, lb_r1_3, lb_r1_4]:
+                ret.add_res(_[1].rank, '13-16')
+
+            lb_r2_1 = boX(lb_r1_1[0], wb_r1_4[1])
+            lb_r2_2 = boX(lb_r1_2[0], wb_r1_3[1])
+            lb_r2_3 = boX(lb_r1_3[0], wb_r1_2[1])
+            lb_r2_4 = boX(lb_r1_4[0], wb_r1_1[1])
+
+            for _ in [lb_r2_1, lb_r2_2, lb_r2_3, lb_r2_4]:
+                ret.add_res(_[1].rank, '9-12')
+
+            lb_r3_1 = boX(lb_r2_1[0], lb_r2_2[0])
+            lb_r3_2 = boX(lb_r2_3[0], lb_r2_4[0])
+
+            for _ in [lb_r3_1, lb_r3_2]:
+                ret.add_res(_[1].rank, '7-8')
+
+            lb_r4_1 = boX(lb_r3_1[0], wb_r2_1[1])
+            lb_r4_2 = boX(lb_r3_2[0], wb_r2_2[1])
+
+            for _ in [lb_r4_1, lb_r4_2]:
+                ret.add_res(_[1].rank, '5-6')
+
+            lb_sf = boX(lb_r4_1[0], lb_r4_2[0])
+            ret.add_res(lb_sf[1].rank, '4')
+            
+            lb_finals = boX(lb_sf[0], wb_finals[1])
+            ret.add_res(lb_finals[1].rank, '3')
+
+            finals = boX(wb_finals[0], lb_finals[0], 3)
 
             ret.add_res(finals[1].rank, '2')
             ret.add_res(finals[0].rank, '1')

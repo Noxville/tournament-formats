@@ -33,9 +33,9 @@ for perc in [0, 50]:
 	formats.append(DotaAsiaChampionships(team_gen(16), 'Dota Asia Championships 2018', perception_error=perc))
 	formats.append(MDLChangsha(team_gen(12), 'MDL Changsha', perception_error=perc))
 	formats.append(Epicenter(team_gen(12), 'Epicenter', perception_error=perc))
-	# gesc thailand
 	formats.append(ESLTwelveTeamFormat(team_gen(12), 'ESL Birmingham', perception_error=perc, gsl_games=[1,2,2,2]))
-	# China supermajor
+	formats.append(RoundRobinIntoBubble(team_gen(9), 'GESC Thailand', perception_error=perc))
+	formats.append(SuperMajor(team_gen(16), 'SuperMajor', perception_error=perc, gsl_games=[2,2,2,2]))
 
 
 print("Starting parallel evaluation")
