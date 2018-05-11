@@ -342,14 +342,14 @@ teams = {}
 
 for t in [
     # name, points, rating, disqualified
-    CurTeam('VP', 7872, 1948.52),
-    CurTeam('Liquid', 4734, 1928.64),
+    CurTeam('VP', 8097, 1948.52),
+    CurTeam('Liquid', 6084, 1928.64),
     CurTeam('Secret', 4710, 1922.61),
     CurTeam('Mineski', 3150, 1864.02),
     CurTeam('Newbee', 2220, 1880.08),
     CurTeam('Vici', 2160, 1891.08),
     CurTeam('VGJ. Thunder', 1935, 1831.79),
-    CurTeam('LGD', 1821, 1913.38),
+    CurTeam('LGD', 4071, 1913.38),
     CurTeam('EG', 1335, 1898.07),
     CurTeam('NaVi', 1199, 1718.25),
     CurTeam('Fnatic', 950, 1830.65),
@@ -368,7 +368,7 @@ for t in [
     CurTeam('Infamous', 0, 1537.20, True),
     CurTeam('Empire', 0, 1700.81, True),
     CurTeam('paiN', 0, 1632.91, True),
-    CurTeam('FTM', 0, 1734.51),
+    CurTeam('FTM', 675, 1734.51, True),
     CurTeam('Spirit', 0, 1678.48, True),
     CurTeam('Alpha Red', 0, 1450, True), # this is a complete guess
     CurTeam('Keen Gaming', 0, 1687.90, True), 
@@ -381,20 +381,13 @@ mdl, epi, gesc, esl, smaj = MDL(), Epicenter(), GESC(), ESL(), SMaj()
 mdl_teams = pluck_t(teams, ['Mineski', 'Newbee', 'Secret', 'Vici', 'IGV', 'IG', 'LGD', 'TNC', 'VGJ. Storm', 'Infamous', 'OG', 'Vega'])
 epi_teams = pluck_t(teams, ['VP', 'Liquid', 'Secret', 'Newbee', 'NaVi', 'OG', 'Empire', 'coL', 'paiN', 'LGD', 'Mineski', 'FTM'])
 smaj_teams = pluck_t(teams, ['VP', 'Liquid', 'Secret', 'Newbee', 'NaVi', 'EG', 'VGJ. Thunder', 'Vici', 'Mineski', 'OG', 'LGD', 'TNC', 'VGJ. Storm', 'Infamous', 'TFT', 'Spirit'])
-gesc_teams = pluck_t(teams, ['Secret', 'EG', 'Alpha Red', 'Fnatic', 'Keen Gaming', 'VGJ. Storm','SG', 'TFT', 'Vega'])
+gesc_teams = pluck_t(teams, ['Secret', 'EG', 'Alpha Red', 'Fnatic', 'Keen Gaming', 'VGJ. Storm','SG', 'TFT'])
 esl_teams = pluck_t(teams, ['VP', 'Newbee', 'EG', 'Liquid', 'Vici', 'Mineski', 'OG', 'NaVi', 'LFY', 'Fnatic', 'Optic', 'paiN'])
 
 for n in range(N):
     points = {}
     for t in teams.values():
         points[t.name] = t.points    
-
-    re = epi.run(epi_teams)
-    #print("Epi: {}".format([_.name for _ in re]))
-    points[re[0].name] = points[re[0].name] + (75 * 3)
-    points[re[1].name] = points[re[1].name] + (225 * 3)
-    points[re[2].name] = points[re[2].name] + (450 * 3)
-    points[re[3].name] = points[re[3].name] + (750 * 3)
 
     re = gesc.run(gesc_teams)
     #print("GESC: {}".format([_.name for _ in re]))
