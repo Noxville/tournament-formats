@@ -1,7 +1,7 @@
 import itertools
 import operator
 
-esl = ["Mineski", "Fnatic", "Optic", "VP", "Liquid", "OG", "Spirit", "Pain", "LFY"]
+esl = ["Mineski", "Fnatic", "Optic", "VP", "OG", "Pain"]
 sma = ["Mineski", "Newbee", "VGJ", "EG", "TNC", "Vici", "Secret", "Liquid", "VP", "TFT", "EG"]
 ignore = ["VP", "Liquid", "OG", "Secret", "Spirit", "Pain", "NaVi", "EG", "LGD", "Storm", "Infamous", 'LFY']
 
@@ -35,21 +35,16 @@ for _esl in itertools.permutations(esl, 4):
 			ss[_] = ss[_] + sp[i]
 		sort_score = sorted(ss.items(), key=operator.itemgetter(1), reverse=True)
 		t4 = [_[0] for _ in sort_score if _[0] not in ignore][:4]
-		if "Mineski" not in _esl:
-			if "Mineski" in t4:
-				make_it += 1
-			else:
-				dont_make += 1
+		if "Mineski" in t4:
+			make_it += 1
+		else:
+			dont_make += 1
 
-				# k = "{} - {}".format(str(sorted(_esl)), str(sorted(_sma)))
-				# dmi[k] = 1 + dmi.get(k, 0)
-				#print("{} / {}".format(_esl, _sma))
-
-				if ("Fnatic" in _esl) or ("Optic" in _esl):
-					fnatic_opt += 1
+			k = "{} - {}".format(str(sorted(_esl)), str(sorted(_sma)))
+			dmi[k] = 1 + dmi.get(k, 0)
+			print("{} / {}".format(_esl, _sma))
 
 print("Make it: {}\nDon't Make It: {}".format(make_it, dont_make))
-print("Fnatic or Optic: {}".format(fnatic_opt))
 print("")
-#for i, j in sorted(dmi.items(), key=operator.itemgetter(1), reverse=True):
-#	print("{}: {}".format(i, j))
+for i, j in sorted(dmi.items(), key=operator.itemgetter(1), reverse=True):
+	print("{}: {}".format(i, j))

@@ -73,18 +73,19 @@ class ESL:
 
 
     def run(self, teams):
-        dec_a = boX([t for t in teams if t.name == 'Fnatic'][0], [t for t in teams if t.name == 'Spirit'][0], func='glicko')
-        dec_b = boX([t for t in teams if t.name == 'paiN'][0], [t for t in teams if t.name == 'Liquid'][0], func='glicko')
-        dec_c = boX([t for t in teams if t.name == 'Mineski'][0], [t for t in teams if t.name == 'LFY'][0], func='glicko')
+        fnatic = [t for t in teams if t.name == 'Fnatic'][0]
+        pain = [t for t in teams if t.name == 'paiN'][0]
+        mineski = [t for t in teams if t.name == 'Mineski'][0]
+        og = mineski = [t for t in teams if t.name == 'OG'][0]
+        optic = [t for t in teams if t.name == 'Optic'][0]
+        vp = [t for t in teams if t.name == 'VP'][0]
 
-        winners = self.resolve_placings([[t for t in teams if t.name == 'VP'][0], [t for t in teams if t.name == 'OG'][0], [t for t in teams if t.name == 'Optic'][0]])
-        rups = sorted([dec_a[0], dec_a[0], dec_a[0]], key=lambda x: random()) # [_.team for _ in self.resolve_placings([gr_a[1], gr_b[1], gr_c[1]])]
 
-        qf_1 = boX(rups[0], rups[1], func='glicko')
-        qf_2 = boX(winners[2], rups[2], func='glicko')
+        qf_1 = boX(pain, mineski, func='glicko')
+        qf_2 = boX(og, fnatic, func='glicko')
 
-        semifinal_1 = boX(qf_1[0], winners[0], func='glicko')
-        semifinal_2 = boX(qf_2[0], winners[1], func='glicko')            
+        semifinal_1 = boX(qf_1[0], vp, func='glicko')
+        semifinal_2 = boX(qf_2[0], optic, func='glicko')            
 
         decider = boX(semifinal_1[1], semifinal_2[1], func='glicko')
 
